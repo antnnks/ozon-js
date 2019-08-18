@@ -112,38 +112,27 @@ function actionPage() {
         searchBtn = document.querySelector('.search-btn');
 
 //фильтр по акции
-    discountCheckbox.addEventListener('click', () => {
-        cards.forEach((card) => {
-            if (discountCheckbox.checked) {
-                if (!card.querySelector('.card-sale')) {
-                    card.parentNode.remove();
-                    // card.parentNode.style.display = 'none';
-                }
-            } else {
-                goods.appendChild(card.parentNode);
-                // card.parentNode.style.display = '';
-            }
-        });
-    });
+    discountCheckbox.addEventListener('click', filter);
 
 //фильтр по цене
-    min.addEventListener('change', filterPrice);
-    max.addEventListener('change', filterPrice);
+    min.addEventListener('change', filter);
+    max.addEventListener('change', filter);
 
-    function filterPrice() {
+    function filter(){
         cards.forEach((card) => {
             const cardPrice = card.querySelector('.card-price');
             const price = parseFloat(cardPrice.textContent);
+            const discount = card.querySelector('.card-sale');
 
-            if ((min.value && price < min.value) || (max.value && price > max.value)) {
-                card.parentNode.remove();
-                // card.parentNode.style.display = 'none';
+            if ((min.value && price < min.value) || (max.value && price > max.value)){
+                card.parentNode.style.display = 'none';
+            } else if (discountCheckbox.checked && !discount) {
+                card.parentNode.style.display = 'none';
             } else {
-                goods.appendChild(card.parentNode);
-                //card.parentNode.style.display = '';
+                card.parentNode.style.display = '';
             }
         });
-    }
+    }  
 
 //поиск
     searchBtn.addEventListener('click', () => {
@@ -157,10 +146,13 @@ function actionPage() {
             }
         });
         search.value = '';
-    });
+    });  
 }
 
+
 //end фильтр акции
+
+
 
 toggleCheckbox();
 toggleCart();
