@@ -53,8 +53,6 @@ function addCart() {
         cartEmpty = document.getElementById('cart-empty'),
         countGoods = document.querySelector('.counter');
 
-
-
     cards.forEach((card) => {
         const btn = card.querySelector('button');
 
@@ -91,18 +89,15 @@ function addCart() {
         } else {
             cartEmpty.remove();
         }
-
     }
 }
 
 //end работа с товаром
 
 
-
 //фильтр акции
 
 function actionPage() {
-
     const cards = document.querySelectorAll('.goods .card'),
         discountCheckbox = document.getElementById('discount-checkbox'),
         goods = document.querySelector('.goods'),
@@ -111,30 +106,16 @@ function actionPage() {
         search = document.querySelector('.search-wrapper_input'),
         searchBtn = document.querySelector('.search-btn');
 
-//фильтр по акции
+    //фильтр по акции
     discountCheckbox.addEventListener('click', filter);
 
-//фильтр по цене
+    //фильтр по цене
     min.addEventListener('change', filter);
     max.addEventListener('change', filter);
 
-    function filter(){
-        cards.forEach((card) => {
-            const cardPrice = card.querySelector('.card-price');
-            const price = parseFloat(cardPrice.textContent);
-            const discount = card.querySelector('.card-sale');
 
-            if ((min.value && price < min.value) || (max.value && price > max.value)){
-                card.parentNode.style.display = 'none';
-            } else if (discountCheckbox.checked && !discount) {
-                card.parentNode.style.display = 'none';
-            } else {
-                card.parentNode.style.display = '';
-            }
-        });
-    }  
 
-//поиск
+    //поиск
     searchBtn.addEventListener('click', () => {
         const searchText = new RegExp(search.value.trim(), 'i');
         cards.forEach((card) => {
@@ -146,15 +127,140 @@ function actionPage() {
             }
         });
         search.value = '';
-    });  
+    });
 }
-
 
 //end фильтр акции
 
+function filter(){
+    const cards = document.querySelectorAll('.goods .card'),
+        discountCheckbox = document.getElementById('discount-checkbox'),
+        goods = document.querySelector('.goods'),
+        min = document.getElementById('min'),
+        max = document.getElementById('max'),
+        activeLi = document.querySelector('.catalog-list li.active');
+
+    cards.forEach((card) => {
+        const cardPrice = card.querySelector('.card-price');
+        const price = parseFloat(cardPrice.textContent);
+        const discount = card.querySelector('.card-sale');
+
+        card.parentNode.style.display = '';
+
+        if ((min.value && price < min.value) || (max.value && price > max.value)) {
+            card.parentNode.style.display = 'none';
+        } else if (discountCheckbox.checked && !discount) {
+            card.parentNode.style.display = 'none';
+        }  else if (activeLi) {
+            if (card.dataset.category !== activeLi.textContent){
+             card.parentNode.style.display = 'none';
+            }
+        } 
+        
+    });
+}
+//получение данных с сервера
+
+function getData() {
+    const goodsWrapper = document.querySelector('.goods');
+    return fetch('../db/db.json')
+        .then((response) => {
+            if (response.ok) {
+                return response.json();
+            } else {
+                throw new Error('Данные не были получены, ошибка: ' + response.status);
+            }
+        })
+        .then((data) => {
+            return data;
+        })
+        .catch((err) => {
+            console.warn(err);
+            goodsWrapper.innerHTML = '<div style="color:red; font-size:30px">Упс, что-то пошло не так!</div>';
+        });
+}
+
+//выводим карточки товара
+function renderCards(data) {
+    const goodsWrapper = document.querySelector('.goods');
+    data.goods.forEach((good) => {
+        const card = document.createElement('div');
+        card.className = 'col-12 col-md-6 col-lg-4 col-xl-3';
+        card.innerHTML = `
+        <div class="card" data-category="${good.category}">
+                ${good.sale ? '<div class="card-sale">🔥Hot Sale🔥</div>' : ''}
+                <div class="card-img-wrapper">
+                    <span class="card-img-top"
+                    style="background-image: url('${good.img}')"></span>
+                </div>
+                <div class="card-body justify-content-between">
+                    <div class="card-price" style="${good.sale ? 'color:red' : ''}">${good.price} ₽</div>
+                    <h5 class="card-title">${good.title}</h5>
+                    <button class="btn btn-primary">В корзину</button>
+                </div>
+        </div>
+        `;
+        goodsWrapper.appendChild(card);
+    });
+}
+//end получение данных с сервера
 
 
-toggleCheckbox();
-toggleCart();
-addCart();
-actionPage();
+function renderCatalog(){
+    const cards = document.querySelectorAll('.goods .card');
+    const catalogList = document.querySelector('.catalog-list');
+    const catalogWrapper = document.querySelector('.catalog');
+    const catalogBtn = document.querySelector('.catalog-button');
+    const categories = new Set();
+    const filterTitle = document.querySelector('.filter-title h5');
+
+    cards.forEach((card) => {
+        categories.add(card.dataset.category);
+    });
+
+    categories.forEach((item) => {
+        const li = document.createElement('li');
+        li.textContent = item;
+        catalogList.appendChild(li);
+    });
+
+    const allLi = catalogList.querySelectorAll('li');
+
+    catalogBtn.addEventListener('click', (event) => {
+        if (catalogWrapper.style.display) {
+            catalogWrapper.style.display = '';
+        } else {
+            catalogWrapper.style.display = 'block';
+        }
+
+        if (event.target.tagName === 'LI'){
+            // cards.forEach((card) => {
+            //     if (card.dataset.category === event.target.textContent){
+            //         card.parentNode.style.display = '';
+            //     } else {
+            //         card.parentNode.style.display = 'none';
+            //     }
+            // });
+
+            allLi.forEach((elem) => {
+                if (elem === event.target){
+                    elem.classList.add('active');
+                } else {
+                    elem.classList.remove('active');
+                }
+            });
+            filterTitle.textContent = event.target.textContent;
+            filter();
+        }
+    });
+  
+}
+
+getData().then((data) => {
+    renderCards(data);
+    renderCatalog();
+    toggleCheckbox();
+    toggleCart();
+    addCart();
+    actionPage();
+});
