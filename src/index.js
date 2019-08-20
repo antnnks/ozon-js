@@ -9,11 +9,15 @@ import addCart from './modules/addCart';
 import actionPage from './modules/actionPage';
 
 
-getData().then((data) => {
-    renderCards(data);
+(async function(){
+    const db = await getData();
+    renderCards(db);
     renderCatalog();
     toggleCheckbox();
     toggleCart();
     addCart();
     actionPage();
-});
+    
+}());
+
+
